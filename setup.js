@@ -42,9 +42,15 @@ class VirtualTourSetup {
             }
 
             this.hideLoading();
+            
+            // Automatically scan for generated tiles on page load
+            this.scanGeneratedTiles();
         } catch (error) {
             console.error('Error initializing setup:', error);
             this.hideLoading();
+            
+            // Still try to scan tiles even if there was an error
+            this.scanGeneratedTiles();
         }
     }
     
