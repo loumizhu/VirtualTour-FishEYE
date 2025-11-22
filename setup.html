@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Fisheye 360° Virtual Tour</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="setup-mode">
+    <div class="setup-container">
+        <aside class="setup-sidebar">
+            <h1>Virtual Tour Setup</h1>
+            
+            <section class="setup-section">
+                <h2>1. Scan & Generate Tiles</h2>
+                <div class="info-box">
+                    <h3>📋 Instructions:</h3>
+                    <ol>
+                        <li>Place your 360° images in the <code>FishEye-Images</code> folder</li>
+                        <li>Click "Generate Tiles from Images" to process them</li>
+                        <li>Wait for tile generation to complete</li>
+                        <li>Scenes will be automatically created</li>
+                    </ol>
+                </div>
+                <button id="generateTilesBtn" class="btn-primary">Generate Tiles from Images</button>
+                <button id="scanImagesBtn" class="btn-secondary">Rescan Generated Tiles</button>
+                <div id="scanProgress" class="progress-info"></div>
+                <div id="imagesList" class="images-list"></div>
+            </section>
+            
+            <section class="setup-section">
+                <h2>2. Manage Scenes</h2>
+                <div id="sceneManager">
+                    <div id="scenesList"></div>
+                    <button id="addSceneBtn" class="btn-secondary">Add Scene</button>
+                </div>
+            </section>
+            
+            <section class="setup-section">
+                <h2>3. Add Hotspots</h2>
+                <p>Click on the panorama to add a hotspot</p>
+                <div class="hotspot-form" id="hotspotForm" style="display: none;">
+                    <label>
+                        Hotspot Type:
+                        <select id="hotspotType">
+                            <option value="link">Link to Scene</option>
+                            <option value="info">Information</option>
+                        </select>
+                    </label>
+                    <label id="targetSceneLabel">
+                        Target Scene:
+                        <select id="targetScene"></select>
+                    </label>
+                    <label id="infoTextLabel" style="display: none;">
+                        Info Text:
+                        <input type="text" id="infoText" placeholder="Enter information">
+                    </label>
+                    <label>
+                        Icon:
+                        <select id="hotspotIcon">
+                            <option value="arrow">Arrow</option>
+                            <option value="info">Info</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </label>
+                    <button id="saveHotspotBtn" class="btn-primary">Save Hotspot</button>
+                    <button id="cancelHotspotBtn" class="btn-secondary">Cancel</button>
+                </div>
+                <div id="hotspotsList"></div>
+            </section>
+            
+            <section class="setup-section">
+                <h2>4. Save Configuration</h2>
+                <button id="saveConfigBtn" class="btn-primary">Save Configuration</button>
+                <button id="loadConfigBtn" class="btn-secondary">Load Configuration</button>
+                <input type="file" id="configFileInput" accept=".json" style="display: none;">
+            </section>
+            
+            <section class="setup-section">
+                <button id="viewerModeBtn" class="btn-success">Go to Viewer Mode</button>
+            </section>
+        </aside>
+        
+        <main class="setup-main">
+            <div id="pano"></div>
+            <div id="setupOverlay" class="setup-overlay">
+                <p>Click to add hotspot</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Loading indicator -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Processing...</p>
+    </div>
+    
+    <!-- Three.js library (local files) -->
+    <script src="three.min.js"></script>
+    <script src="OrbitControls.js"></script>
+    <script src="tile-generator.js"></script>
+    <script src="setup.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,30 @@
+{
+  "name": "fisheye-360-virtual-tour",
+  "version": "2.0.0",
+  "description": "A high-performance 360° virtual tour viewer built with Three.js",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "serve": "python -m http.server 8000",
+    "generate-tiles": "python generate_tiles.py"
+  },
+  "keywords": [
+    "360",
+    "panorama",
+    "virtual-tour",
+    "threejs",
+    "three.js",
+    "webgl",
+    "fisheye",
+    "cube-map"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "cdn": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js",
+    "orbitControls": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"
+  }
+}
+

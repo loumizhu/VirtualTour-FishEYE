@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fisheye 360° Virtual Tour</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="pano"></div>
+    
+    <!-- Loading indicator -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+    
+    <!-- Navigation UI -->
+    <div id="controls" class="controls">
+        <button id="setupBtn" class="control-btn">Setup Mode</button>
+        <button id="autorotateBtn" class="control-btn">Auto Rotate</button>
+        <button id="resetBtn" class="control-btn">Reset View</button>
+    </div>
+    
+    <!-- Scene selector -->
+    <div id="sceneList" class="scene-list"></div>
+    
+    <!-- Three.js library (local files) -->
+    <script src="three.min.js"></script>
+    <script src="OrbitControls.js"></script>
+    <script src="viewer.js"></script>
+</body>
+</html>
+

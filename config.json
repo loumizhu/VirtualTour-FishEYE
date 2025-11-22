@@ -1,0 +1,34 @@
+{
+  "scenes": [
+    {
+      "id": "360_(1)",
+      "name": "Scene 1",
+      "tilesPath": "tiles/360_(1)",
+      "initialView": {
+        "yaw": 0,
+        "pitch": 0,
+        "fov": 1.5707963267948966
+      },
+      "hotspots": []
+    },
+    {
+      "id": "360_(2)",
+      "name": "Scene 2",
+      "tilesPath": "tiles/360_(2)",
+      "initialView": {
+        "yaw": 0,
+        "pitch": 0,
+        "fov": 1.5707963267948966
+      },
+      "hotspots": []
+    }
+  ],
+  "settings": {
+    "autorotateSpeed": 0.1,
+    "transitionDuration": 1000,
+    "mouseViewMode": "drag",
+    "dragSensitivity": 0.3,
+    "zoomSensitivity": 2
+  }
+}
+
