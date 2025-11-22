@@ -617,15 +617,34 @@ class VirtualTourViewer {
         const settingsPanel = document.getElementById('settingsPanel');
         this.cameraInfoElement = document.getElementById('cameraInfo');
 
+        console.log('Setting up settings panel:', { settingsBtn, settingsPanel, closeSettingsBtn });
+
         // Toggle settings panel
-        if (settingsBtn) {
-            settingsBtn.addEventListener('click', () => {
-                settingsPanel.classList.toggle('hidden');
+        if (settingsBtn && settingsPanel) {
+            settingsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Settings button clicked, toggling panel');
+                const isHidden = settingsPanel.classList.contains('hidden');
+                if (isHidden) {
+                    settingsPanel.classList.remove('hidden');
+                    console.log('Panel shown');
+                } else {
+                    settingsPanel.classList.add('hidden');
+                    console.log('Panel hidden');
+                }
+            });
+        } else {
+            console.error('Settings button or panel not found!', { 
+                settingsBtn: !!settingsBtn, 
+                settingsPanel: !!settingsPanel 
             });
         }
 
-        if (closeSettingsBtn) {
-            closeSettingsBtn.addEventListener('click', () => {
+        if (closeSettingsBtn && settingsPanel) {
+            closeSettingsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 settingsPanel.classList.add('hidden');
             });
         }
