@@ -1,5 +1,5 @@
 # Tiles directory (generated files)
-tiles/
+# tiles/ - Commented out to include tiles in GitHub Pages deployment
 
 # OS files
 .DS_Store
