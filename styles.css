@@ -408,14 +408,14 @@ body {
     transform: translateX(-100%);
     opacity: 0;
     pointer-events: none;
-    display: none;
+    visibility: hidden;
 }
 
 .settings-panel:not(.hidden) {
     transform: translateX(0);
     opacity: 1;
     pointer-events: auto;
-    display: block;
+    visibility: visible;
 }
 
 .settings-header {
