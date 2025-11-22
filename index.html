@@ -20,6 +20,49 @@
         <button id="setupBtn" class="control-btn">Setup Mode</button>
         <button id="autorotateBtn" class="control-btn">Auto Rotate</button>
         <button id="resetBtn" class="control-btn">Reset View</button>
+        <button id="settingsBtn" class="control-btn">⚙️ Settings</button>
+    </div>
+    
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="settings-panel hidden">
+        <div class="settings-header">
+            <h3>Debug Settings</h3>
+            <button id="closeSettingsBtn" class="close-btn">×</button>
+        </div>
+        <div class="settings-content">
+            <div class="settings-section">
+                <h4>Visualization</h4>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showGrid">
+                    <span>Show Grid</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showHorizon">
+                    <span>Show Horizon Line</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showWireframe">
+                    <span>Cube Wireframe</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showAxes">
+                    <span>Show Axes Helper</span>
+                </label>
+            </div>
+            <div class="settings-section">
+                <h4>Camera Info</h4>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showCameraInfo" checked>
+                    <span>Display Camera Info</span>
+                </label>
+                <div id="cameraInfo" class="camera-info"></div>
+            </div>
+            <div class="settings-section">
+                <h4>Camera Controls</h4>
+                <button id="resetRollBtn" class="action-btn">Reset Camera Roll</button>
+                <button id="resetCameraBtn" class="action-btn">Reset Camera Position</button>
+            </div>
+        </div>
     </div>
     
     <!-- Scene selector -->

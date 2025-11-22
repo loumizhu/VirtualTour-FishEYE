@@ -18,6 +18,13 @@ class VirtualTourViewer {
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
         this.isTransitioning = false;
+        
+        // Debug helpers
+        this.gridHelper = null;
+        this.horizonLine = null;
+        this.axesHelper = null;
+        this.showCameraInfo = true;
+        this.cameraInfoElement = null;
 
         this.init();
     }
@@ -566,6 +573,9 @@ class VirtualTourViewer {
         this.camera.up.set(0, 1, 0);
         this.camera.up.normalize();
         
+        // Update camera info display
+        this.updateCameraInfo();
+        
         this.renderer.render(this.scene, this.camera);
     }
 
@@ -594,8 +604,242 @@ class VirtualTourViewer {
             });
         }
 
+        // Settings panel
+        this.setupSettingsPanel();
+
         // Create scene list
         this.updateSceneList();
+    }
+    
+    setupSettingsPanel() {
+        const settingsBtn = document.getElementById('settingsBtn');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const settingsPanel = document.getElementById('settingsPanel');
+        this.cameraInfoElement = document.getElementById('cameraInfo');
+
+        // Toggle settings panel
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                settingsPanel.classList.toggle('hidden');
+            });
+        }
+
+        if (closeSettingsBtn) {
+            closeSettingsBtn.addEventListener('click', () => {
+                settingsPanel.classList.add('hidden');
+            });
+        }
+
+        // Grid toggle
+        const showGridCheck = document.getElementById('showGrid');
+        if (showGridCheck) {
+            showGridCheck.addEventListener('change', (e) => {
+                this.toggleGrid(e.target.checked);
+            });
+        }
+
+        // Horizon line toggle
+        const showHorizonCheck = document.getElementById('showHorizon');
+        if (showHorizonCheck) {
+            showHorizonCheck.addEventListener('change', (e) => {
+                this.toggleHorizon(e.target.checked);
+            });
+        }
+
+        // Wireframe toggle
+        const showWireframeCheck = document.getElementById('showWireframe');
+        if (showWireframeCheck) {
+            showWireframeCheck.addEventListener('change', (e) => {
+                this.toggleWireframe(e.target.checked);
+            });
+        }
+
+        // Axes helper toggle
+        const showAxesCheck = document.getElementById('showAxes');
+        if (showAxesCheck) {
+            showAxesCheck.addEventListener('change', (e) => {
+                this.toggleAxes(e.target.checked);
+            });
+        }
+
+        // Camera info toggle
+        const showCameraInfoCheck = document.getElementById('showCameraInfo');
+        if (showCameraInfoCheck) {
+            showCameraInfoCheck.addEventListener('change', (e) => {
+                this.showCameraInfo = e.target.checked;
+                if (this.cameraInfoElement) {
+                    this.cameraInfoElement.style.display = this.showCameraInfo ? 'block' : 'none';
+                }
+            });
+        }
+
+        // Reset roll button
+        const resetRollBtn = document.getElementById('resetRollBtn');
+        if (resetRollBtn) {
+            resetRollBtn.addEventListener('click', () => {
+                this.resetCameraRoll();
+            });
+        }
+
+        // Reset camera position button
+        const resetCameraBtn = document.getElementById('resetCameraBtn');
+        if (resetCameraBtn) {
+            resetCameraBtn.addEventListener('click', () => {
+                this.resetCameraPosition();
+            });
+        }
+    }
+    
+    toggleGrid(show) {
+        if (show) {
+            if (!this.gridHelper) {
+                this.gridHelper = new THREE.GridHelper(200, 20, 0x888888, 0x444444);
+                this.scene.add(this.gridHelper);
+            }
+        } else {
+            if (this.gridHelper) {
+                this.scene.remove(this.gridHelper);
+                this.gridHelper = null;
+            }
+        }
+    }
+    
+    toggleHorizon(show) {
+        if (show) {
+            if (!this.horizonLine) {
+                // Create a circle at y=0 to represent the horizon
+                const radius = 50;
+                const segments = 64;
+                const geometry = new THREE.BufferGeometry();
+                const vertices = [];
+                
+                for (let i = 0; i <= segments; i++) {
+                    const angle = (i / segments) * Math.PI * 2;
+                    vertices.push(
+                        Math.cos(angle) * radius,
+                        0,
+                        Math.sin(angle) * radius
+                    );
+                }
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
+                const material = new THREE.LineBasicMaterial({ 
+                    color: 0x00ff00, 
+                    linewidth: 3,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                this.horizonLine = new THREE.Line(geometry, material);
+                this.scene.add(this.horizonLine);
+            }
+        } else {
+            if (this.horizonLine) {
+                this.scene.remove(this.horizonLine);
+                this.horizonLine = null;
+            }
+        }
+    }
+    
+    toggleWireframe(show) {
+        if (this.currentCubeMesh) {
+            this.currentCubeMesh.traverse((child) => {
+                if (child.isMesh) {
+                    child.material.wireframe = show;
+                }
+            });
+        }
+        
+        // Also update all loaded scenes
+        Object.values(this.scenes).forEach(sceneInfo => {
+            if (sceneInfo.cubeMesh) {
+                sceneInfo.cubeMesh.traverse((child) => {
+                    if (child.isMesh) {
+                        child.material.wireframe = show;
+                    }
+                });
+            }
+        });
+    }
+    
+    toggleAxes(show) {
+        if (show) {
+            if (!this.axesHelper) {
+                this.axesHelper = new THREE.AxesHelper(50);
+                this.scene.add(this.axesHelper);
+            }
+        } else {
+            if (this.axesHelper) {
+                this.scene.remove(this.axesHelper);
+                this.axesHelper = null;
+            }
+        }
+    }
+    
+    resetCameraRoll() {
+        // Reset camera roll by enforcing up vector and recalculating look direction
+        const direction = new THREE.Vector3();
+        this.camera.getWorldDirection(direction);
+        
+        // Set up vector to prevent roll
+        this.camera.up.set(0, 1, 0);
+        this.camera.up.normalize();
+        
+        // Recalculate camera position to maintain view direction
+        const distance = this.camera.position.length();
+        const target = new THREE.Vector3(0, 0, 0);
+        const newPosition = target.clone().sub(direction.multiplyScalar(distance));
+        this.camera.position.copy(newPosition);
+        this.camera.lookAt(0, 0, 0);
+        
+        // Final enforcement
+        this.camera.up.set(0, 1, 0);
+        this.camera.up.normalize();
+        
+        // Update controls
+        this.controls.update();
+    }
+    
+    resetCameraPosition() {
+        // Reset to default position
+        this.camera.position.set(0, 0, 0.1);
+        this.camera.up.set(0, 1, 0);
+        this.camera.up.normalize();
+        this.camera.lookAt(0, 0, 0);
+        this.camera.fov = 75;
+        this.camera.updateProjectionMatrix();
+        this.controls.update();
+    }
+    
+    updateCameraInfo() {
+        if (!this.showCameraInfo || !this.cameraInfoElement) return;
+        
+        const pos = this.camera.position;
+        const rot = this.camera.rotation;
+        
+        // Calculate yaw and pitch from camera position
+        const direction = new THREE.Vector3();
+        this.camera.getWorldDirection(direction);
+        const yaw = Math.atan2(direction.x, direction.z);
+        const pitch = Math.asin(direction.y);
+        
+        const info = `Position:
+  X: ${pos.x.toFixed(3)}
+  Y: ${pos.y.toFixed(3)}
+  Z: ${pos.z.toFixed(3)}
+
+Rotation (Euler):
+  X: ${(rot.x * 180 / Math.PI).toFixed(2)}°
+  Y: ${(rot.y * 180 / Math.PI).toFixed(2)}°
+  Z: ${(rot.z * 180 / Math.PI).toFixed(2)}°
+
+Spherical:
+  Yaw: ${(yaw * 180 / Math.PI).toFixed(2)}°
+  Pitch: ${(pitch * 180 / Math.PI).toFixed(2)}°
+
+FOV: ${this.camera.fov.toFixed(2)}°
+Aspect: ${this.camera.aspect.toFixed(3)}`;
+        
+        this.cameraInfoElement.textContent = info;
     }
 
     updateSceneList() {
