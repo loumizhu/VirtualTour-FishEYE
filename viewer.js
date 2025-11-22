@@ -101,6 +101,11 @@ class VirtualTourViewer {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(this.renderer.domElement);
 
+        // Lock the up vector to prevent roll (rotation around Z-axis)
+        // This is critical for keeping the horizon horizontal - MUST be set BEFORE controls
+        this.camera.up.set(0, 1, 0);
+        this.camera.up.normalize();
+
         // Create controls (OrbitControls will be loaded from CDN)
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableZoom = false; // Disable default zoom, we'll use FOV
@@ -116,12 +121,8 @@ class VirtualTourViewer {
         this.controls.minPolarAngle = 0.1; // ~6 degrees from top
         this.controls.maxPolarAngle = Math.PI - 0.1; // ~6 degrees from bottom
 
-        // Lock the up vector to prevent roll (rotation around Z-axis)
-        // This is critical for keeping the horizon horizontal
-        this.camera.up.set(0, 1, 0);
-        this.camera.up.normalize();
-
-        // Prevent OrbitControls from changing the up vector
+        // CRITICAL: Prevent roll by continuously enforcing up vector
+        // This ensures horizon stays horizontal like in FPS games
         this.controls.addEventListener('change', () => {
             // Enforce fixed up vector after every control update
             this.camera.up.set(0, 1, 0);
@@ -430,7 +431,15 @@ class VirtualTourViewer {
                 this.camera.position.x = 0.1 * Math.sin(phi) * Math.sin(theta);
                 this.camera.position.y = 0.1 * Math.cos(phi);
                 this.camera.position.z = 0.1 * Math.sin(phi) * Math.cos(theta);
+                
+                // Lock up vector before lookAt to prevent roll
+                this.camera.up.set(0, 1, 0);
+                this.camera.up.normalize();
                 this.camera.lookAt(0, 0, 0);
+                
+                // Re-enforce up vector after lookAt
+                this.camera.up.set(0, 1, 0);
+                this.camera.up.normalize();
 
                 if (progress < 1) {
                     requestAnimationFrame(animate);
@@ -456,7 +465,15 @@ class VirtualTourViewer {
         this.camera.position.x = 0.1 * Math.sin(phi) * Math.sin(theta);
         this.camera.position.y = 0.1 * Math.cos(phi);
         this.camera.position.z = 0.1 * Math.sin(phi) * Math.cos(theta);
+        
+        // Lock up vector before lookAt to prevent roll
+        this.camera.up.set(0, 1, 0);
+        this.camera.up.normalize();
         this.camera.lookAt(0, 0, 0);
+        
+        // Re-enforce up vector after lookAt
+        this.camera.up.set(0, 1, 0);
+        this.camera.up.normalize();
 
         // Update FOV if specified
         if (view.fov) {
@@ -521,11 +538,19 @@ class VirtualTourViewer {
     animate() {
         requestAnimationFrame(() => this.animate());
 
+        // CRITICAL: Continuously enforce up vector to prevent horizon tilt
+        // This must be done every frame to keep horizon horizontal
+        this.camera.up.set(0, 1, 0);
+        this.camera.up.normalize();
+
         // Auto-rotate
         if (this.isAutorotating && !this.isTransitioning) {
             const rotationSpeed = this.autorotateSpeed * 0.001;
             this.camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationSpeed);
             this.camera.lookAt(0, 0, 0);
+            // Re-enforce up vector after lookAt
+            this.camera.up.set(0, 1, 0);
+            this.camera.up.normalize();
         }
 
         // Animate hotspots (pulse effect)
@@ -536,6 +561,11 @@ class VirtualTourViewer {
         });
 
         this.controls.update();
+        
+        // Re-enforce up vector after controls update (final safety check)
+        this.camera.up.set(0, 1, 0);
+        this.camera.up.normalize();
+        
         this.renderer.render(this.scene, this.camera);
     }
 
