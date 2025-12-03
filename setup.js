@@ -381,7 +381,7 @@ class VirtualTourSetup {
         this.config.scenes = [];
 
         // Create a scene for each detected tile set
-        sceneIds.forEach((sceneId, index) => {
+        sceneIds.forEach((sceneId) => {
             const sceneName = sceneId.replace(/_/g, ' ').replace(/\(/g, '').replace(/\)/g, '');
 
             this.config.scenes.push({
@@ -437,20 +437,40 @@ class VirtualTourSetup {
     renderScenesList() {
         const scenesList = document.getElementById('scenesList');
         scenesList.innerHTML = '';
-        
+
         this.config.scenes.forEach((scene, index) => {
             const sceneCard = document.createElement('div');
             sceneCard.className = 'scene-card';
-            sceneCard.innerHTML = `
-                <h3>${scene.name}</h3>
-                <p>ID: ${scene.id}</p>
-                <button onclick="tourSetup.loadScene('${scene.id}')">Load</button>
-                <button onclick="tourSetup.editScene(${index})">Edit</button>
-                <button class="delete-btn" onclick="tourSetup.deleteScene(${index})">Delete</button>
-            `;
+
+            // Create elements safely without innerHTML to prevent XSS
+            const h3 = document.createElement('h3');
+            h3.textContent = scene.name;
+
+            const p = document.createElement('p');
+            p.textContent = `ID: ${scene.id}`;
+
+            const loadBtn = document.createElement('button');
+            loadBtn.textContent = 'Load';
+            loadBtn.addEventListener('click', () => this.loadScene(scene.id));
+
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.addEventListener('click', () => this.editScene(index));
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.addEventListener('click', () => this.deleteScene(index));
+
+            sceneCard.appendChild(h3);
+            sceneCard.appendChild(p);
+            sceneCard.appendChild(loadBtn);
+            sceneCard.appendChild(editBtn);
+            sceneCard.appendChild(deleteBtn);
+
             scenesList.appendChild(sceneCard);
         });
-        
+
         // Update target scene dropdown
         this.updateTargetSceneDropdown();
     }
@@ -527,25 +547,34 @@ class VirtualTourSetup {
             canvas.height = faceSize;
             const ctx = canvas.getContext('2d');
 
-            // Load all tiles for this face
-            let tilesLoaded = 0;
+            // Load all tiles for this face in parallel for better performance
+            const tilePromises = [];
             for (let y = 0; y < tilesPerSide; y++) {
                 for (let x = 0; x < tilesPerSide; x++) {
                     const tilePath = `${tilesPath}/${level}/${face}/${y}/${x}.jpg`;
-
-                    try {
-                        const img = await this.loadImage(tilePath);
-                        // Draw tile at correct position
-                        ctx.drawImage(img, x * tileSize, y * tileSize, tileSize, tileSize);
-                        tilesLoaded++;
-                    } catch (e) {
-                        console.warn(`Failed to load tile ${tilePath}`);
-                        // Fill with gray color for missing tiles
-                        ctx.fillStyle = '#808080';
-                        ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
-                    }
+                    tilePromises.push(
+                        this.loadImage(tilePath)
+                            .then(img => ({ img, x, y, success: true }))
+                            .catch(() => ({ x, y, success: false }))
+                    );
                 }
             }
+
+            // Wait for all tiles to load in parallel
+            const tileResults = await Promise.all(tilePromises);
+            let tilesLoaded = 0;
+
+            // Draw all tiles to canvas
+            tileResults.forEach(result => {
+                if (result.success) {
+                    ctx.drawImage(result.img, result.x * tileSize, result.y * tileSize, tileSize, tileSize);
+                    tilesLoaded++;
+                } else {
+                    // Fill with gray color for missing tiles
+                    ctx.fillStyle = '#808080';
+                    ctx.fillRect(result.x * tileSize, result.y * tileSize, tileSize, tileSize);
+                }
+            });
 
             console.log(`Loaded ${tilesLoaded}/${tilesPerSide * tilesPerSide} tiles for face ${face}`);
 
@@ -730,17 +759,31 @@ class VirtualTourSetup {
             hotspotsList.innerHTML = '<p>Load a scene first</p>';
             return;
         }
-        
+
         hotspotsList.innerHTML = '<h4>Hotspots:</h4>';
-        
+
         this.currentScene.data.hotspots.forEach((hotspot, index) => {
             const card = document.createElement('div');
             card.className = 'hotspot-card';
-            card.innerHTML = `
-                <p>Type: ${hotspot.type}</p>
-                <p>${hotspot.type === 'link' ? 'Target: ' + hotspot.target : 'Text: ' + hotspot.text}</p>
-                <button class="delete-btn" onclick="tourSetup.deleteHotspot(${index})">Delete</button>
-            `;
+
+            // Create elements safely to prevent XSS
+            const typePara = document.createElement('p');
+            typePara.textContent = `Type: ${hotspot.type}`;
+
+            const detailsPara = document.createElement('p');
+            detailsPara.textContent = hotspot.type === 'link'
+                ? `Target: ${hotspot.target}`
+                : `Text: ${hotspot.text}`;
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.addEventListener('click', () => this.deleteHotspot(index));
+
+            card.appendChild(typePara);
+            card.appendChild(detailsPara);
+            card.appendChild(deleteBtn);
+
             hotspotsList.appendChild(card);
         });
     }

@@ -291,25 +291,34 @@ class VirtualTourViewer {
             canvas.height = faceSize;
             const ctx = canvas.getContext('2d');
 
-            // Load all tiles for this face
-            let tilesLoaded = 0;
+            // Load all tiles for this face in parallel for better performance
+            const tilePromises = [];
             for (let y = 0; y < tilesPerSide; y++) {
                 for (let x = 0; x < tilesPerSide; x++) {
                     const tilePath = `${tilesPath}/${level}/${face}/${y}/${x}.jpg`;
-
-                    try {
-                        const img = await this.loadImage(tilePath);
-                        // Draw tile at correct position
-                        ctx.drawImage(img, x * tileSize, y * tileSize, tileSize, tileSize);
-                        tilesLoaded++;
-                    } catch (e) {
-                        console.warn(`Failed to load tile ${tilePath}`);
-                        // Fill with gray color for missing tiles
-                        ctx.fillStyle = '#808080';
-                        ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
-                    }
+                    tilePromises.push(
+                        this.loadImage(tilePath)
+                            .then(img => ({ img, x, y, success: true }))
+                            .catch(() => ({ x, y, success: false }))
+                    );
                 }
             }
+
+            // Wait for all tiles to load in parallel
+            const tileResults = await Promise.all(tilePromises);
+            let tilesLoaded = 0;
+
+            // Draw all tiles to canvas
+            tileResults.forEach(result => {
+                if (result.success) {
+                    ctx.drawImage(result.img, result.x * tileSize, result.y * tileSize, tileSize, tileSize);
+                    tilesLoaded++;
+                } else {
+                    // Fill with gray color for missing tiles
+                    ctx.fillStyle = '#808080';
+                    ctx.fillRect(result.x * tileSize, result.y * tileSize, tileSize, tileSize);
+                }
+            });
 
             console.log(`Loaded ${tilesLoaded}/${tilesPerSide * tilesPerSide} tiles for face ${face}`);
 
@@ -370,9 +379,10 @@ class VirtualTourViewer {
             await this.loadSceneTiles(sceneId);
         }
 
-        // Remove current scene
+        // Remove current scene and dispose resources to prevent memory leaks
         if (this.currentCubeMesh) {
             this.scene.remove(this.currentCubeMesh);
+            this.disposeMesh(this.currentCubeMesh);
         }
 
         // Remove current hotspots
@@ -396,6 +406,33 @@ class VirtualTourViewer {
         this.updateSceneList();
 
         this.hideLoading();
+    }
+
+    disposeMesh(mesh) {
+        // Dispose of geometry, materials, and textures to free memory
+        if (mesh.geometry) {
+            mesh.geometry.dispose();
+        }
+
+        if (mesh.material) {
+            // Handle both single material and material arrays
+            const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+            materials.forEach(material => {
+                // Dispose of textures
+                if (material.map) {
+                    material.map.dispose();
+                }
+                // Dispose of material
+                material.dispose();
+            });
+        }
+
+        // Recursively dispose children
+        if (mesh.children) {
+            mesh.children.forEach(child => {
+                this.disposeMesh(child);
+            });
+        }
     }
 
 
